@@ -66,15 +66,32 @@ export default function Contact() {
 
     setIsSubmitting(true);
     
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-    setFormState({ name: "", email: "", subject: "", message: "" });
-    
-    setTimeout(() => {
-      setIsSubmitted(false);
-    }, 5000);
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formState),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to send message");
+      }
+
+      setIsSubmitted(true);
+      setFormState({ name: "", email: "", subject: "", message: "" });
+      
+      setTimeout(() => {
+        setIsSubmitted(false);
+      }, 5000);
+    } catch (error) {
+      setErrors({ submit: error instanceof Error ? error.message : "Failed to send message. Please try again." });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const contactInfo = [
@@ -306,6 +323,12 @@ export default function Contact() {
                         <p className="mt-1 text-sm text-red-500">{errors.message}</p>
                       )}
                     </div>
+
+                    {errors.submit && (
+                      <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                        <p className="text-sm text-red-600 dark:text-red-400">{errors.submit}</p>
+                      </div>
+                    )}
 
                     <button
                       type="submit"
